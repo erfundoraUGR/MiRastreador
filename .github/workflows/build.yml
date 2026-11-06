@@ -2,7 +2,11 @@ name: Compilar APK
 
 on:
   push:
+    branches: [main]
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -31,3 +35,17 @@ jobs:
         with:
           name: MiRastreador-apk
           path: MiRastreador.apk
+
+      - name: Publicar APK (Release y rama apk)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v1.0.${{ github.run_number }}"
+          gh release create "$TAG" MiRastreador.apk --title "Mi Rastreador $TAG" --notes "APK listo para instalar en Android." --latest
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git checkout --orphan apk
+          git rm -rq --cached .
+          git add -f MiRastreador.apk
+          git commit -qm "APK $TAG"
+          git push -f origin apk
