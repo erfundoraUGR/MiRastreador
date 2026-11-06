@@ -70,6 +70,15 @@ object SmsParser {
     fun alarmKind(body: String): String? =
         alarms.firstOrNull { it.first.containsMatchIn(body) }?.second
 
+    /**
+     * Saldo de la SIM en respuestas como "Saldo Principal 25.32 CUP" o "Balance: 12,50".
+     * Exige un espacio o ":" antes de la cifra para no confundir "balance123456".
+     */
+    private val balanceRe = Regex("""(saldo|balance)[^\d\n]{0,25}?[:\s]\s*\$?(\d+(?:[.,]\d{1,2})?)""", RegexOption.IGNORE_CASE)
+
+    fun balance(body: String): Double? =
+        balanceRe.find(body)?.groupValues?.get(2)?.replace(',', '.')?.toDoubleOrNull()
+
     private fun parseTime(body: String): Long? {
         val m = timeRe.find(body) ?: return null
         var month = m.groupValues[1].toInt()

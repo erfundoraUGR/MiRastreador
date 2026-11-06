@@ -39,21 +39,45 @@
         </FrameLayout>
 
         <LinearLayout
+            android:id="@+id/nameArea"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="4dp"
             android:layout_weight="1"
-            android:orientation="vertical">
+            android:background="@drawable/bg_clear_ripple"
+            android:clickable="true"
+            android:focusable="true"
+            android:contentDescription="Cambiar de rastreador"
+            android:orientation="vertical"
+            android:paddingStart="4dp"
+            android:paddingTop="2dp"
+            android:paddingEnd="4dp"
+            android:paddingBottom="2dp">
 
-            <TextView
-                android:id="@+id/tvName"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:fontFamily="@font/space_grotesk_semibold"
-                android:maxLines="1"
-                android:textColor="#17202A"
-                android:textSize="17sp" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tvName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:fontFamily="@font/space_grotesk_semibold"
+                    android:maxLines="1"
+                    android:textColor="#17202A"
+                    android:textSize="17sp" />
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_marginStart="4dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_chevron_down" />
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/tvStatus"
@@ -199,10 +223,12 @@
                 app:chipSpacingHorizontal="8dp"
                 app:chipSpacingVertical="8dp">
 
+                <TextView android:id="@+id/chipVigil" style="@style/StatusChip" />
                 <TextView android:id="@+id/chipFence" style="@style/StatusChip" />
                 <TextView android:id="@+id/chipAuto" style="@style/StatusChip" />
                 <TextView android:id="@+id/chipDistance" style="@style/StatusChip" />
                 <TextView android:id="@+id/chipWait" style="@style/StatusChip" />
+                <TextView android:id="@+id/chipBalance" style="@style/StatusChip" />
             </com.google.android.material.chip.ChipGroup>
 
             <com.google.android.material.button.MaterialButton

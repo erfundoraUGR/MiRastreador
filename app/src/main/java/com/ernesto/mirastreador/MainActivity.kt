@@ -21,7 +21,6 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
@@ -30,7 +29,6 @@ import androidx.core.widget.TextViewCompat
 import com.google.android.material.button.MaterialButton
 import org.osmdroid.config.Configuration
 import org.osmdroid.events.MapEventsReceiver
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
@@ -45,7 +43,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class MainActivity : AppCompatActivity(), MapEventsReceiver {
+class MainActivity : SecureActivity(), MapEventsReceiver {
 
     private lateinit var map: MapView
     private lateinit var tvName: TextView
@@ -57,6 +55,9 @@ class MainActivity : AppCompatActivity(), MapEventsReceiver {
     private lateinit var chipAuto: TextView
     private lateinit var chipDistance: TextView
     private lateinit var chipWait: TextView
+    private lateinit var chipVigil: TextView
+    private lateinit var chipBalance: TextView
+    private var offlineApplied = false
 
     private var meOverlay: MyLocationNewOverlay? = null
     private val dynamic = mutableListOf<Overlay>()
@@ -105,8 +106,10 @@ class MainActivity : AppCompatActivity(), MapEventsReceiver {
         chipAuto = findViewById(R.id.chipAuto)
         chipDistance = findViewById(R.id.chipDistance)
         chipWait = findViewById(R.id.chipWait)
+        chipVigil = findViewById(R.id.chipVigil)
+        chipBalance = findViewById(R.id.chipBalance)
 
-        map.setTileSource(TileSourceFactory.MAPNIK)
+        offlineApplied = MapSetup.apply(this, map)
         map.setMultiTouchControls(true)
         map.zoomController.setVisibility(CustomZoomButtonsController.Visibility.NEVER)
         map.controller.setZoom(15.0)
@@ -126,6 +129,11 @@ class MainActivity : AppCompatActivity(), MapEventsReceiver {
         findViewById<ImageButton>(R.id.fabMe).setOnClickListener { centerMe() }
         val btnMenu = findViewById<ImageButton>(R.id.btnMenu)
         btnMenu.setOnClickListener { showMenu(btnMenu) }
+        findViewById<View>(R.id.nameArea).setOnClickListener { showTrackerPicker() }
+        chipVigil.setOnClickListener { confirmStopVigil() }
+
+        AutoTrackWorker.migrateLegacy(this)
+        handleTrackerIntent(intent)
 
         requestNeededPermissions()
         if (hasLocation()) setupMyLocation()
@@ -135,8 +143,22 @@ class MainActivity : AppCompatActivity(), MapEventsReceiver {
         refreshMap(center = true)
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleTrackerIntent(intent)
+        refreshMap(center = true)
+        refreshText()
+    }
+
+    /** Al tocar una notificación, se muestra el rastreador que la generó. */
+    private fun handleTrackerIntent(i: Intent?) {
+        val id = i?.getStringExtra(Alerts.EXTRA_TRACKER) ?: return
+        TrackerStore.setCurrent(this, id)
+    }
+
     override fun onResume() {
         super.onResume()
+        if (MapSetup.wantsOffline(this) != offlineApplied) { recreate(); return }
         map.onResume()
         meOverlay?.enableMyLocation()
         ContextCompat.registerReceiver(
@@ -283,10 +305,29 @@ class MainActivity : AppCompatActivity(), MapEventsReceiver {
             else chip(chipFence, "Dentro de la zona segura", "#E6F4EA", "#1B6E30", R.drawable.ic_shield)
         }
 
+        // Modo vigilancia
+        val id = TrackerStore.currentId(this)
+        if (VigilanceWorker.active(this, id)) {
+            chip(chipVigil, "Vigilancia activa · hasta ${fmtHour.format(Date(TrackerStore.vigilUntil(this, id)))}",
+                "#FDECEA", "#B42318", R.drawable.ic_shield)
+        } else chipVigil.visibility = View.GONE
+
         // Seguimiento automático
         val auto = TrackerStore.autoMinutes(this)
-        if (auto > 0) chip(chipAuto, "Auto · cada ${autoLabel(auto)}", "#E8EFFC", "#1F4FB0", null)
-        else chipAuto.visibility = View.GONE
+        when {
+            auto <= 0 -> chipAuto.visibility = View.GONE
+            TrackerStore.autoPaused(this) -> chip(chipAuto, "Auto pausado: sin respuesta", "#FFF4D6", "#7A4E00", null)
+            !AutoTrackWorker.inWindow(this, id) -> chip(chipAuto, "Auto · fuera de horario", "#F2F4F6", "#4F5B66", null)
+            else -> chip(chipAuto, "Auto · cada ${autoLabel(auto)}", "#E8EFFC", "#1F4FB0", null)
+        }
+
+        // Saldo de la SIM del rastreador
+        val bal = TrackerStore.balance(this)
+        if (bal != null) {
+            val low = TrackerStore.balanceMin(this) > 0 && bal < TrackerStore.balanceMin(this)
+            chip(chipBalance, String.format(Locale.US, "Saldo SIM: %.2f", bal),
+                if (low) "#FDECEA" else "#F2F4F6", if (low) "#B42318" else "#4F5B66", null)
+        } else chipBalance.visibility = View.GONE
 
         // Distancia hasta mí
         val me = meOverlay?.myLocation
@@ -370,6 +411,44 @@ class MainActivity : AppCompatActivity(), MapEventsReceiver {
         val me = meOverlay?.myLocation ?: return toast("Buscando tu ubicación… activa el GPS del teléfono")
         map.controller.setZoom(17.0)
         map.controller.animateTo(me)
+    }
+
+    // ---------- Varios rastreadores ----------
+
+    private fun showTrackerPicker() {
+        val list = TrackerStore.all(this)
+        val current = TrackerStore.currentId(this)
+        val labels = list.map { t ->
+            val phone = if (t.phone.isBlank()) "sin número" else t.phone
+            (if (t.id == current) "✓  " else "     ") + t.name + "  ·  " + phone
+        } + "＋  Añadir rastreador"
+        AlertDialog.Builder(this)
+            .setTitle("Rastreadores")
+            .setItems(labels.toTypedArray()) { _, i ->
+                if (i == list.size) {
+                    TrackerStore.addTracker(this)
+                    startActivity(Intent(this, SettingsActivity::class.java))
+                } else {
+                    TrackerStore.setCurrent(this, list[i].id)
+                    TrackerWidget.updateAll(this)
+                }
+                refreshMap(center = true)
+                refreshText()
+            }
+            .setNegativeButton("Cerrar", null)
+            .show()
+    }
+
+    private fun confirmStopVigil() {
+        val id = TrackerStore.currentId(this)
+        if (!VigilanceWorker.active(this, id)) return
+        AlertDialog.Builder(this)
+            .setTitle("Modo vigilancia")
+            .setMessage("Se están pidiendo ubicaciones cada ${TrackerStore.vigilInterval(this, id)} min " +
+                "hasta las ${fmtHour.format(Date(TrackerStore.vigilUntil(this, id)))}. ¿Detenerlo ahora?")
+            .setPositiveButton("Detener") { _, _ -> VigilanceWorker.stop(this, id); refreshText() }
+            .setNegativeButton("Seguir vigilando", null)
+            .show()
     }
 
     // ---------- Zona segura ----------

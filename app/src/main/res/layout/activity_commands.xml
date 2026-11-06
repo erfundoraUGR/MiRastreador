@@ -1,49 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/screen">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="24dp">
 
         <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="10dp"
-            android:text="Toca un comando para enviarlo (siempre se pide confirmación). Los comandos cambian según el modelo: si alguno no funciona, mantenlo pulsado para editarlo según el manual de tu rastreador."
-            android:textSize="13sp" />
+            style="@style/CardHint"
+            android:layout_marginTop="0dp"
+            android:text="Toca un comando para enviarlo (siempre se pide confirmación). Si alguno no funciona con tu modelo, mantenlo pulsado para editarlo según el manual." />
+
+        <LinearLayout style="@style/Card">
+
+            <TextView
+                style="@style/CardTitle"
+                android:text="Última respuesta del rastreador" />
+
+            <TextView
+                android:id="@+id/tvReply"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:fontFamily="monospace"
+                android:textColor="@color/ink"
+                android:textIsSelectable="true"
+                android:textSize="13sp" />
+        </LinearLayout>
 
         <LinearLayout
             android:id="@+id/commandList"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
             android:orientation="vertical" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCustom"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            style="@style/PrimaryBtn"
+            android:layout_marginTop="8dp"
             android:text="Comando personalizado…" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
-            android:text="Última respuesta del rastreador"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/tvReply"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:background="#1F888888"
-            android:padding="12dp"
-            android:textIsSelectable="true"
-            android:textSize="13sp" />
     </LinearLayout>
 </ScrollView>

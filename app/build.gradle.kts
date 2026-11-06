@@ -11,8 +11,8 @@ android {
         applicationId = "com.ernesto.mirastreador"
         minSdk = 23
         targetSdk = 34
-        versionCode = 3
-        versionName = "2.1"
+        versionCode = 4
+        versionName = "3.0"
     }
 
     // Clave fija: así cada nueva versión se instala encima de la anterior
@@ -51,4 +51,5 @@ dependencies {
     implementation("com.google.android.material:material:1.12.0")
     implementation("org.osmdroid:osmdroid-android:6.1.20")
     implementation("androidx.work:work-runtime-ktx:2.9.1")
+    implementation("androidx.biometric:biometric:1.1.0")
 }

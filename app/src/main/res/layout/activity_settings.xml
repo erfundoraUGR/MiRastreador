@@ -1,118 +1,274 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/screen">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="28dp">
 
-        <TextView style="@style/SectionTitle" android:text="Rastreador" />
+        <!-- Rastreador -->
+        <LinearLayout style="@style/Card" android:layout_marginTop="0dp">
+            <TextView style="@style/CardTitle" android:text="Rastreador" />
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Nombre (p. ej. Moto, Carro)">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etName"
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textCapSentences" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_marginTop="10dp"
+                android:hint="Nombre (p. ej. Moto, Carro)">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textCapSentences" />
+            </com.google.android.material.textfield.TextInputLayout>
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Número de la SIM del rastreador">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etPhone"
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="phone" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_marginTop="8dp"
+                android:hint="Número de la SIM del rastreador">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etPhone"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="phone" />
+            </com.google.android.material.textfield.TextInputLayout>
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Contraseña del rastreador (por defecto 123456)">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etPass"
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="number" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_marginTop="8dp"
+                android:hint="Contraseña del rastreador (por defecto 123456)">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etPass"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number" />
+            </com.google.android.material.textfield.TextInputLayout>
+        </LinearLayout>
 
-        <TextView style="@style/SectionTitle" android:text="Seguimiento automático" />
+        <!-- Seguimiento automático -->
+        <LinearLayout style="@style/Card">
+            <TextView style="@style/CardTitle" android:text="Seguimiento automático" />
+            <TextView style="@style/CardHint" android:text="Pide la ubicación por SMS cada cierto tiempo, aunque la app esté cerrada." />
 
-        <Spinner
-            android:id="@+id/spAuto"
-            android:layout_width="match_parent"
-            android:layout_height="48dp" />
+            <Spinner
+                android:id="@+id/spAuto"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="8dp" />
 
-        <TextView
-            android:id="@+id/tvAutoInfo"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textSize="13sp" />
+            <TextView android:id="@+id/tvAutoInfo" style="@style/CardHint" />
 
-        <TextView style="@style/SectionTitle" android:text="Alertas" />
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Límite de velocidad en km/h (vacío = sin límite)">
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etSpeed"
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/swWindow"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="number" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_marginTop="10dp"
+                android:minHeight="48dp"
+                android:text="Solo dentro de un horario"
+                android:textSize="15sp" />
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:text="Zona segura"
-            android:textStyle="bold" />
+            <LinearLayout
+                android:id="@+id/windowRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/tvFence"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="13sp" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Desde"
+                    android:textColor="@color/ink" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnFenceOff"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Desactivar zona segura" />
+                <Spinner
+                    android:id="@+id/spFrom"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnTestAlarm"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="Probar el sonido de alarma" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="hasta"
+                    android:textColor="@color/ink" />
 
-        <TextView style="@style/SectionTitle" android:text="Datos" />
+                <Spinner
+                    android:id="@+id/spTo"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1" />
+            </LinearLayout>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnClear"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Borrar historial de posiciones" />
+            <TextView
+                style="@style/CardHint"
+                android:text="Si el rastreador no responde 3 veces seguidas, el seguimiento se pausa solo para no gastar saldo, y se reanuda cuando vuelve a responder." />
+        </LinearLayout>
+
+        <!-- Modo vigilancia -->
+        <LinearLayout style="@style/Card">
+            <TextView style="@style/CardTitle" android:text="Modo vigilancia" />
+            <TextView
+                style="@style/CardHint"
+                android:text="Cuando llega una alarma (vibración, movimiento, SOS, corte de corriente o salida de la zona segura), la app pide la ubicación sola cada pocos minutos para seguir el recorrido." />
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/swVigil"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:minHeight="48dp"
+                android:text="Activar vigilancia tras una alarma"
+                android:textSize="15sp" />
+
+            <TextView style="@style/FieldLabel" android:text="Pedir ubicación cada" />
+            <Spinner
+                android:id="@+id/spVigilInterval"
+                android:layout_width="match_parent"
+                android:layout_height="48dp" />
+
+            <TextView style="@style/FieldLabel" android:text="Durante" />
+            <Spinner
+                android:id="@+id/spVigilDuration"
+                android:layout_width="match_parent"
+                android:layout_height="48dp" />
+        </LinearLayout>
+
+        <!-- Alertas -->
+        <LinearLayout style="@style/Card">
+            <TextView style="@style/CardTitle" android:text="Alertas" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:hint="Límite de velocidad en km/h (vacío = sin límite)">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etSpeed"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="Avisar si el saldo de la SIM baja de (vacío = no avisar)">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etBalanceMin"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberDecimal" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView android:id="@+id/tvBalance" style="@style/CardHint" />
+
+            <TextView style="@style/FieldLabel" android:text="Zona segura" />
+            <TextView android:id="@+id/tvFence" style="@style/CardHint" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnFenceOff"
+                style="@style/OutlineBtn"
+                android:text="Desactivar zona segura" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnTestAlarm"
+                style="@style/OutlineBtn"
+                android:text="Probar el sonido de alarma" />
+        </LinearLayout>
+
+        <!-- Seguridad -->
+        <LinearLayout style="@style/Card">
+            <TextView style="@style/CardTitle" android:text="Seguridad" />
+            <TextView
+                style="@style/CardHint"
+                android:text="Pide la huella, el rostro o el PIN del teléfono al abrir la app o al volver a ella tras más de un minuto." />
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/swLock"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:minHeight="48dp"
+                android:text="Bloquear la app"
+                android:textSize="15sp" />
+        </LinearLayout>
+
+        <!-- Mapa sin conexión -->
+        <LinearLayout style="@style/Card">
+            <TextView style="@style/CardTitle" android:text="Mapa sin conexión" />
+            <TextView
+                style="@style/CardHint"
+                android:text="Carga un mapa preparado en el PC (archivo .mbtiles o .sqlite, por ejemplo con Mobile Atlas Creator) para ver el mapa sin gastar datos. Sin él, la app guarda las zonas que ya has visto." />
+
+            <TextView android:id="@+id/tvMapFile" style="@style/CardHint" android:textColor="@color/ink" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnLoadMap"
+                style="@style/OutlineBtn"
+                android:text="Cargar archivo de mapa" />
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/swOffline"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:minHeight="48dp"
+                android:text="Usar el mapa sin conexión"
+                android:textSize="15sp" />
+        </LinearLayout>
+
+        <!-- Copia de seguridad -->
+        <LinearLayout style="@style/Card">
+            <TextView style="@style/CardTitle" android:text="Copia de seguridad" />
+            <TextView
+                style="@style/CardHint"
+                android:text="Guarda en un archivo todos los rastreadores, el historial, las zonas, los comandos y los ajustes. Útil antes de cambiar de teléfono." />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnBackup"
+                style="@style/OutlineBtn"
+                android:text="Guardar copia" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnRestore"
+                style="@style/OutlineBtn"
+                android:text="Restaurar copia" />
+        </LinearLayout>
+
+        <!-- Datos -->
+        <LinearLayout style="@style/Card">
+            <TextView style="@style/CardTitle" android:text="Datos de este rastreador" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnClear"
+                style="@style/OutlineBtn"
+                android:text="Borrar historial de posiciones" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDeleteTracker"
+                style="@style/OutlineBtn"
+                android:text="Eliminar este rastreador"
+                android:textColor="#B42318" />
+        </LinearLayout>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSave"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
+            style="@style/PrimaryBtn"
+            android:layout_marginTop="18dp"
             android:text="Guardar" />
     </LinearLayout>
 </ScrollView>

@@ -10,14 +10,15 @@ import androidx.core.content.ContextCompat
 object SmsSender {
 
     /** Envía un SMS al rastreador. Devuelve null si todo fue bien, o el motivo del fallo. */
-    fun send(ctx: Context, text: String): String? {
-        val phone = TrackerStore.phone(ctx)
+    fun send(ctx: Context, text: String, trackerId: String = TrackerStore.currentId(ctx)): String? {
+        val phone = TrackerStore.phone(ctx, trackerId)
         if (phone.isBlank()) return "Configura primero el número del rastreador"
         if (ContextCompat.checkSelfPermission(ctx, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED)
             return "Falta el permiso para enviar SMS"
         return try {
             manager(ctx).sendTextMessage(phone, null, text, null, null)
-            TrackerStore.setLastRequestAt(ctx, System.currentTimeMillis())
+            TrackerStore.setLastRequestAt(ctx, System.currentTimeMillis(), trackerId)
+            TrackerWidget.updateAll(ctx)
             null
         } catch (e: Exception) {
             "No se pudo enviar el SMS: ${e.message}"

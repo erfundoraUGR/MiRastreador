@@ -23,6 +23,10 @@ object Alerts {
     const val ID_POSITION = 1
     const val ID_REPLY = 2
     const val ID_FENCE = 3
+    const val ID_VIGIL = 4
+    const val ID_AUTO = 5
+
+    const val EXTRA_TRACKER = "trackerId"
 
     private fun ensureChannels(ctx: Context) {
         if (Build.VERSION.SDK_INT < 26) return
@@ -34,7 +38,7 @@ object Alerts {
         }
         if (nm.getNotificationChannel(CH_ALARM) == null) {
             val ch = NotificationChannel(CH_ALARM, "Alarmas", NotificationManager.IMPORTANCE_HIGH)
-            ch.description = "Alarmas del rastreador, salida de la zona segura y exceso de velocidad"
+            ch.description = "Alarmas del rastreador, salida de la zona segura, exceso de velocidad y saldo bajo"
             ch.enableVibration(true)
             ch.vibrationPattern = longArrayOf(0, 600, 300, 600, 300, 600)
             ch.enableLights(true)
@@ -54,13 +58,17 @@ object Alerts {
         Build.VERSION.SDK_INT < 33 ||
             ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
 
-    private fun openApp(ctx: Context): PendingIntent = PendingIntent.getActivity(
-        ctx, 0,
-        Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+    /** Abre la app mostrando el rastreador que generó la notificación. */
+    private fun openApp(ctx: Context, trackerId: String): PendingIntent = PendingIntent.getActivity(
+        ctx, trackerId.hashCode(),
+        Intent(ctx, MainActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            .putExtra(EXTRA_TRACKER, trackerId),
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 
-    fun info(ctx: Context, title: String, text: String, id: Int) {
+    fun info(ctx: Context, title: String, text: String, notifId: Int,
+             trackerId: String = TrackerStore.currentId(ctx)) {
         if (!allowed(ctx)) return
         ensureChannels(ctx)
         val n = NotificationCompat.Builder(ctx, CH_INFO)
@@ -68,14 +76,16 @@ object Alerts {
             .setContentTitle(title)
             .setContentText(text)
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
-            .setContentIntent(openApp(ctx))
+            .setContentIntent(openApp(ctx, trackerId))
             .setAutoCancel(true)
             .build()
-        show(ctx, id, n)
+        // Un id distinto por rastreador para que no se pisen entre sí
+        show(ctx, notifId * 1000 + (trackerId.hashCode() and 0x3FF) % 1000, n)
     }
 
     /** Devuelve false si no hay permiso para mostrar notificaciones. */
-    fun alarm(ctx: Context, title: String, text: String): Boolean {
+    fun alarm(ctx: Context, title: String, text: String,
+              trackerId: String = TrackerStore.currentId(ctx)): Boolean {
         if (!allowed(ctx)) return false
         ensureChannels(ctx)
         val n = NotificationCompat.Builder(ctx, CH_ALARM)
@@ -87,10 +97,10 @@ object Alerts {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setDefaults(NotificationCompat.DEFAULT_ALL)
-            .setContentIntent(openApp(ctx))
+            .setContentIntent(openApp(ctx, trackerId))
             .setAutoCancel(true)
             .build()
-        show(ctx, (System.currentTimeMillis() % 100000).toInt() + 100, n)
+        show(ctx, (System.currentTimeMillis() % 100000).toInt() + 100000, n)
         return true
     }
 

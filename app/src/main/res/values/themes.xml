@@ -1,14 +1,98 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Pantallas secundarias (con barra superior) -->
-    <style name="Theme.MiRastreador" parent="Theme.MaterialComponents.Light.DarkActionBar">
+    <!-- Pantallas secundarias: barra clara, fondo gris muy suave -->
+    <style name="Theme.MiRastreador" parent="Theme.MaterialComponents.Light">
         <item name="colorPrimary">#2E6BE6</item>
         <item name="colorPrimaryVariant">#1F4FB0</item>
         <item name="colorOnPrimary">#FFFFFF</item>
         <item name="colorSecondary">#2E6BE6</item>
         <item name="colorOnSecondary">#FFFFFF</item>
+        <item name="colorControlNormal">#17202A</item>
         <item name="android:fontFamily">@font/inter</item>
         <item name="fontFamily">@font/inter</item>
+        <item name="android:windowBackground">@color/screen</item>
+        <item name="android:statusBarColor">@color/screen</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:navigationBarColor">@color/screen</item>
+        <item name="actionBarStyle">@style/LightBar</item>
+        <item name="actionBarTheme">@style/LightBarTheme</item>
+    </style>
+
+    <style name="LightBar" parent="Widget.MaterialComponents.Light.ActionBar.Solid">
+        <item name="background">@color/screen</item>
+        <item name="elevation">0dp</item>
+        <item name="titleTextStyle">@style/LightBarTitle</item>
+    </style>
+
+    <style name="LightBarTheme" parent="ThemeOverlay.MaterialComponents.ActionBar">
+        <item name="colorControlNormal">#17202A</item>
+    </style>
+
+    <style name="LightBarTitle" parent="TextAppearance.AppCompat.Widget.ActionBar.Title">
+        <item name="android:textColor">#17202A</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:fontFamily">@font/space_grotesk_semibold</item>
+        <item name="fontFamily">@font/space_grotesk_semibold</item>
+    </style>
+
+    <style name="Card">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">12dp</item>
+        <item name="android:background">@drawable/bg_card_flat</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:padding">16dp</item>
+    </style>
+
+    <style name="CardTitle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:fontFamily">@font/space_grotesk_semibold</item>
+        <item name="android:textColor">#17202A</item>
+        <item name="android:textSize">17sp</item>
+    </style>
+
+    <style name="CardHint">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">4dp</item>
+        <item name="android:textColor">#5B6670</item>
+        <item name="android:textSize">13sp</item>
+    </style>
+
+    <style name="FieldLabel">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">12dp</item>
+        <item name="android:fontFamily">@font/inter_medium</item>
+        <item name="android:textColor">#17202A</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="OutlineBtn" parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">52dp</item>
+        <item name="android:layout_marginTop">8dp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:letterSpacing">0</item>
+        <item name="android:fontFamily">@font/inter_semibold</item>
+        <item name="android:textSize">15sp</item>
+        <item name="cornerRadius">14dp</item>
+        <item name="strokeColor">#D5DAE0</item>
+        <item name="android:textColor">#17202A</item>
+    </style>
+
+    <style name="PrimaryBtn" parent="Widget.MaterialComponents.Button">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">56dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:letterSpacing">0</item>
+        <item name="android:fontFamily">@font/inter_semibold</item>
+        <item name="android:textSize">16sp</item>
+        <item name="cornerRadius">18dp</item>
+        <item name="backgroundTint">#2E6BE6</item>
     </style>
 
     <!-- Pantalla principal: mapa a pantalla completa, sin barra -->

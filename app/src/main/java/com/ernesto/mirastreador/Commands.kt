@@ -23,6 +23,8 @@ object Commands {
             "Batería, señal GSM y GPS."),
         TrackerCommand("params", "Ver configuración", "param{p}",
             "APN, servidor, intervalos y números configurados."),
+        TrackerCommand("balance", "Consultar saldo de la SIM", "balance{p} *222#",
+            "Pide al rastreador que consulte el saldo de su SIM (*222# en Cubacel) y te reenvíe la respuesta. No todos los modelos lo admiten."),
         TrackerCommand("arm", "Activar alarma de movimiento", "arm{p}",
             "El rastreador avisa por SMS si el vehículo se mueve o vibra."),
         TrackerCommand("disarm", "Desactivar alarma", "disarm{p}",
@@ -39,10 +41,10 @@ object Commands {
     fun byId(id: String): TrackerCommand = all.first { it.id == id }
 
     /** Plantilla actual (la editada por el usuario o la predeterminada). */
-    fun template(ctx: Context, id: String): String =
-        TrackerStore.commandTemplate(ctx, id) ?: byId(id).template
+    fun template(ctx: Context, cmd: String): String =
+        TrackerStore.commandTemplate(ctx, cmd) ?: byId(cmd).template
 
-    /** Texto final listo para enviar. */
-    fun text(ctx: Context, id: String): String =
-        TrackerStore.fillCommand(ctx, template(ctx, id))
+    /** Texto final listo para enviar al rastreador indicado. */
+    fun text(ctx: Context, cmd: String, trackerId: String = TrackerStore.currentId(ctx)): String =
+        TrackerStore.fillCommand(ctx, template(ctx, cmd), trackerId)
 }
