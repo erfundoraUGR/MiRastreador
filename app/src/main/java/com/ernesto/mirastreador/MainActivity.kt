@@ -6,27 +6,33 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.graphics.Color
+import android.graphics.DashPathEffect
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.view.Menu
-import android.view.MenuItem
+import android.text.format.DateUtils
 import android.view.View
+import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.PopupMenu
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.toBitmap
+import androidx.core.view.ViewCompat
+import androidx.core.widget.TextViewCompat
 import com.google.android.material.button.MaterialButton
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import org.osmdroid.config.Configuration
 import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
@@ -42,9 +48,16 @@ import java.util.Locale
 class MainActivity : AppCompatActivity(), MapEventsReceiver {
 
     private lateinit var map: MapView
+    private lateinit var tvName: TextView
     private lateinit var tvStatus: TextView
-    private lateinit var tvDetail: TextView
-    private lateinit var tvExtra: TextView
+    private lateinit var tvLabel: TextView
+    private lateinit var tvCoords: TextView
+    private lateinit var tvSpeed: TextView
+    private lateinit var chipFence: TextView
+    private lateinit var chipAuto: TextView
+    private lateinit var chipDistance: TextView
+    private lateinit var chipWait: TextView
+
     private var meOverlay: MyLocationNewOverlay? = null
     private val dynamic = mutableListOf<Overlay>()
 
@@ -57,7 +70,7 @@ class MainActivity : AppCompatActivity(), MapEventsReceiver {
     private val ticker = object : Runnable {
         override fun run() {
             refreshText()
-            handler.postDelayed(this, 10_000)
+            handler.postDelayed(this, 5_000)
         }
     }
 
@@ -83,26 +96,36 @@ class MainActivity : AppCompatActivity(), MapEventsReceiver {
         setContentView(R.layout.activity_main)
 
         map = findViewById(R.id.map)
+        tvName = findViewById(R.id.tvName)
         tvStatus = findViewById(R.id.tvStatus)
-        tvDetail = findViewById(R.id.tvDetail)
-        tvExtra = findViewById(R.id.tvExtra)
+        tvLabel = findViewById(R.id.tvLabel)
+        tvCoords = findViewById(R.id.tvCoords)
+        tvSpeed = findViewById(R.id.tvSpeed)
+        chipFence = findViewById(R.id.chipFence)
+        chipAuto = findViewById(R.id.chipAuto)
+        chipDistance = findViewById(R.id.chipDistance)
+        chipWait = findViewById(R.id.chipWait)
 
         map.setTileSource(TileSourceFactory.MAPNIK)
         map.setMultiTouchControls(true)
+        map.zoomController.setVisibility(CustomZoomButtonsController.Visibility.NEVER)
         map.controller.setZoom(15.0)
         map.controller.setCenter(GeoPoint(22.4067, -79.9531)) // Santa Clara, si aún no hay datos
         map.overlays.add(MapEventsOverlay(this))
 
         findViewById<MaterialButton>(R.id.btnLocate).setOnClickListener { requestLocation() }
-        findViewById<MaterialButton>(R.id.btnRoute).setOnClickListener { openDirections() }
-        findViewById<MaterialButton>(R.id.btnCommands).setOnClickListener {
+        findViewById<View>(R.id.tileCommands).setOnClickListener {
             startActivity(Intent(this, CommandsActivity::class.java))
         }
-        findViewById<MaterialButton>(R.id.btnHistory).setOnClickListener {
+        findViewById<View>(R.id.tileHistory).setOnClickListener {
             startActivity(Intent(this, HistoryActivity::class.java))
         }
-        findViewById<FloatingActionButton>(R.id.fabVehicle).setOnClickListener { centerVehicle() }
-        findViewById<FloatingActionButton>(R.id.fabMe).setOnClickListener { centerMe() }
+        findViewById<View>(R.id.tileFence).setOnClickListener { showFenceMenu() }
+        findViewById<View>(R.id.tileRoute).setOnClickListener { openDirections() }
+        findViewById<ImageButton>(R.id.fabVehicle).setOnClickListener { centerVehicle() }
+        findViewById<ImageButton>(R.id.fabMe).setOnClickListener { centerMe() }
+        val btnMenu = findViewById<ImageButton>(R.id.btnMenu)
+        btnMenu.setOnClickListener { showMenu(btnMenu) }
 
         requestNeededPermissions()
         if (hasLocation()) setupMyLocation()
@@ -134,19 +157,18 @@ class MainActivity : AppCompatActivity(), MapEventsReceiver {
 
     // ---------- Menú ----------
 
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.main, menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.menu_fence -> showFenceMenu()
-            R.id.menu_settings -> startActivity(Intent(this, SettingsActivity::class.java))
-            R.id.menu_last_reply -> showLastReply()
-            else -> return super.onOptionsItemSelected(item)
+    private fun showMenu(anchor: View) {
+        val pm = PopupMenu(this, anchor)
+        pm.menuInflater.inflate(R.menu.main, pm.menu)
+        pm.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                R.id.menu_fence -> showFenceMenu()
+                R.id.menu_settings -> startActivity(Intent(this, SettingsActivity::class.java))
+                R.id.menu_last_reply -> showLastReply()
+            }
+            true
         }
-        return true
+        pm.show()
     }
 
     // ---------- Mapa ----------
@@ -165,13 +187,17 @@ class MainActivity : AppCompatActivity(), MapEventsReceiver {
             if (recent.size > 1) {
                 val line = Polyline()
                 line.setPoints(recent.map { GeoPoint(it.lat, it.lon) })
-                line.outlinePaint.color = Color.parseColor("#2E6BE6")
-                line.outlinePaint.strokeWidth = 6f
+                line.outlinePaint.color = ACCENT
+                line.outlinePaint.strokeWidth = 10f
+                line.outlinePaint.strokeCap = android.graphics.Paint.Cap.ROUND
                 dynamic.add(line)
-                recent.dropLast(1).forEach { dynamic.add(dotMarker(it)) }
+                recent.dropLast(1).forEachIndexed { i, p ->
+                    dynamic.add(dotMarker(p, if (i == 0) R.drawable.dot_green else R.drawable.dot_blue))
+                }
             }
             val m = Marker(map)
             m.position = GeoPoint(last.lat, last.lon)
+            m.setIcon(ContextCompat.getDrawable(this, R.drawable.pin_vehicle))
             m.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
             m.title = TrackerStore.name(this)
             m.snippet = fmtFull.format(Date(last.deviceTime)) + " · " + speedText(last)
@@ -184,10 +210,10 @@ class MainActivity : AppCompatActivity(), MapEventsReceiver {
         map.invalidate()
     }
 
-    private fun dotMarker(p: Position): Marker {
+    private fun dotMarker(p: Position, icon: Int): Marker {
         val m = Marker(map)
         m.position = GeoPoint(p.lat, p.lon)
-        m.setIcon(ContextCompat.getDrawable(this, R.drawable.dot_blue))
+        m.setIcon(ContextCompat.getDrawable(this, icon))
         m.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
         m.title = fmtShort.format(Date(p.deviceTime))
         m.snippet = speedText(p)
@@ -197,15 +223,21 @@ class MainActivity : AppCompatActivity(), MapEventsReceiver {
     private fun fenceOverlay(f: Fence): Polygon {
         val poly = Polygon()
         poly.setPoints(Polygon.pointsAsCircle(GeoPoint(f.lat, f.lon), f.radius.toDouble()))
-        poly.fillPaint.color = Color.argb(45, 46, 160, 67)
+        poly.fillPaint.color = Color.argb(26, 46, 160, 67)
         poly.outlinePaint.color = Color.rgb(46, 160, 67)
         poly.outlinePaint.strokeWidth = 4f
+        poly.outlinePaint.pathEffect = DashPathEffect(floatArrayOf(18f, 18f), 0f)
         return poly
     }
 
     private fun setupMyLocation() {
         if (meOverlay != null) return
         val o = MyLocationNewOverlay(GpsMyLocationProvider(this), map)
+        ContextCompat.getDrawable(this, R.drawable.dot_me)?.toBitmap()?.let { bmp ->
+            o.setPersonIcon(bmp)
+            o.setPersonHotspot(bmp.width / 2f, bmp.height / 2f)
+            o.setDirectionArrow(bmp, bmp)
+        }
         o.enableMyLocation()
         o.runOnFirstFix { runOnUiThread { refreshText() } }
         map.overlays.add(o)
@@ -221,54 +253,73 @@ class MainActivity : AppCompatActivity(), MapEventsReceiver {
         return true
     }
 
-    // ---------- Textos ----------
+    // ---------- Textos y chips ----------
 
     private fun refreshText() {
-        supportActionBar?.title = TrackerStore.name(this)
+        tvName.text = TrackerStore.name(this)
         val last = TrackerStore.history(this).lastOrNull()
 
         if (last == null) {
             tvStatus.text = "Sin posiciones todavía"
-            tvDetail.text = "Pulsa «Pedir ubicación». La respuesta del rastreador aparecerá aquí sola."
+            tvLabel.text = "Sin datos"
+            tvCoords.text = "Pide la ubicación"
+            tvSpeed.text = "–"
         } else {
-            tvStatus.text = movement(last) + " · " + ago(last.deviceTime)
-            val parts = mutableListOf(fmtFull.format(Date(last.deviceTime)))
-            parts.add(String.format(Locale.US, "%.5f, %.5f", last.lat, last.lon))
-            meOverlay?.myLocation?.let { me ->
-                val d = GeoUtils.distance(me.latitude, me.longitude, last.lat, last.lon)
-                parts.add("a ${GeoUtils.fmtDist(d)} de ti")
-            }
-            TrackerStore.fence(this)?.let { f ->
-                val d = GeoUtils.distance(last.lat, last.lon, f.lat, f.lon)
-                parts.add(if (d > f.radius) "FUERA de la zona segura" else "dentro de la zona segura")
-            }
-            tvDetail.text = parts.joinToString("  ·  ")
+            tvStatus.text = (if (last.speedKmh < 3) "Detenido" else "En movimiento") + " · " + ago(last.deviceTime)
+            val time = if (DateUtils.isToday(last.deviceTime)) fmtHour.format(Date(last.deviceTime))
+            else fmtShort.format(Date(last.deviceTime))
+            tvLabel.text = "Última posición · $time"
+            tvCoords.text = String.format(Locale.US, "%.5f, %.5f", last.lat, last.lon).replace("-", "−")
+            tvSpeed.text = String.format(Locale.US, "%.1f", last.speedKmh)
         }
 
-        val extra = extraText()
-        tvExtra.text = extra
-        tvExtra.visibility = if (extra.isEmpty()) View.GONE else View.VISIBLE
-    }
+        // Zona segura
+        val f = TrackerStore.fence(this)
+        if (f == null || last == null) {
+            chipFence.visibility = View.GONE
+        } else {
+            val outside = GeoUtils.distance(last.lat, last.lon, f.lat, f.lon) > f.radius
+            if (outside) chip(chipFence, "Fuera de la zona segura", "#FDECEA", "#B42318", R.drawable.ic_shield)
+            else chip(chipFence, "Dentro de la zona segura", "#E6F4EA", "#1B6E30", R.drawable.ic_shield)
+        }
 
-    private fun extraText(): String {
-        val lines = mutableListOf<String>()
+        // Seguimiento automático
+        val auto = TrackerStore.autoMinutes(this)
+        if (auto > 0) chip(chipAuto, "Auto · cada ${autoLabel(auto)}", "#E8EFFC", "#1F4FB0", null)
+        else chipAuto.visibility = View.GONE
+
+        // Distancia hasta mí
+        val me = meOverlay?.myLocation
+        if (me != null && last != null) {
+            val d = GeoUtils.distance(me.latitude, me.longitude, last.lat, last.lon)
+            chip(chipDistance, "A ${GeoUtils.fmtDist(d)} de ti", "#F1ECFC", "#5B34C4", null)
+        } else chipDistance.visibility = View.GONE
+
+        // Esperando respuesta
         val req = TrackerStore.lastRequestAt(this)
         val rep = TrackerStore.lastReply(this)?.second ?: 0L
         if (req > rep) {
             val s = (System.currentTimeMillis() - req) / 1000
-            lines.add(
-                if (s < 300) "Esperando respuesta del rastreador… ($s s)"
-                else "Sin respuesta desde las ${fmtHour.format(Date(req))}. Revisa el saldo y la cobertura del rastreador."
-            )
-        }
-        val auto = TrackerStore.autoMinutes(this)
-        if (auto > 0) lines.add("Seguimiento automático activo: cada ${autoLabel(auto)}")
-        return lines.joinToString("\n")
+            if (s < 300) chip(chipWait, "Esperando respuesta… $s s", "#FFF4D6", "#7A4E00", null)
+            else chip(chipWait, "Sin respuesta desde las ${fmtHour.format(Date(req))}", "#FDECEA", "#B42318", null)
+        } else chipWait.visibility = View.GONE
     }
 
-    private fun movement(p: Position): String =
-        if (p.speedKmh < 3) "Detenido"
-        else String.format(Locale.US, "En movimiento (%.0f km/h)", p.speedKmh)
+    private fun chip(v: TextView, text: String, bg: String, fg: String, icon: Int?) {
+        v.text = text
+        v.setTextColor(Color.parseColor(fg))
+        ViewCompat.setBackgroundTintList(v, ColorStateList.valueOf(Color.parseColor(bg)))
+        if (icon != null) {
+            val d = ContextCompat.getDrawable(this, icon)
+            val size = (14 * resources.displayMetrics.density).toInt()
+            d?.setBounds(0, 0, size, size)
+            v.setCompoundDrawablesRelative(d, null, null, null)
+            TextViewCompat.setCompoundDrawableTintList(v, ColorStateList.valueOf(Color.parseColor(fg)))
+        } else {
+            v.setCompoundDrawablesRelative(null, null, null, null)
+        }
+        v.visibility = View.VISIBLE
+    }
 
     private fun speedText(p: Position): String = String.format(Locale.US, "%.1f km/h", p.speedKmh)
 
@@ -396,5 +447,6 @@ class MainActivity : AppCompatActivity(), MapEventsReceiver {
 
     companion object {
         private const val DAY_MS = 24L * 60 * 60 * 1000
+        private val ACCENT = Color.parseColor("#2E6BE6")
     }
 }

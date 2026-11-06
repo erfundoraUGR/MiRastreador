@@ -1,11 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.MiRastreador" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+    <!-- Pantallas secundarias (con barra superior) -->
+    <style name="Theme.MiRastreador" parent="Theme.MaterialComponents.Light.DarkActionBar">
         <item name="colorPrimary">#2E6BE6</item>
         <item name="colorPrimaryVariant">#1F4FB0</item>
         <item name="colorOnPrimary">#FFFFFF</item>
         <item name="colorSecondary">#2E6BE6</item>
         <item name="colorOnSecondary">#FFFFFF</item>
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="fontFamily">@font/inter</item>
+    </style>
+
+    <!-- Pantalla principal: mapa a pantalla completa, sin barra -->
+    <style name="Theme.MiRastreador.Main" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="colorPrimary">#2E6BE6</item>
+        <item name="colorPrimaryVariant">#1F4FB0</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorSecondary">#2E6BE6</item>
+        <item name="colorOnSecondary">#FFFFFF</item>
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="fontFamily">@font/inter</item>
+        <item name="android:statusBarColor">#FFFFFF</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:navigationBarColor">#FFFFFF</item>
     </style>
 
     <style name="SectionTitle">
@@ -15,6 +32,48 @@
         <item name="android:layout_marginBottom">6dp</item>
         <item name="android:textColor">#2E6BE6</item>
         <item name="android:textSize">15sp</item>
-        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">@font/inter_semibold</item>
+    </style>
+
+    <style name="StatusChip">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">@drawable/bg_chip</item>
+        <item name="android:paddingStart">10dp</item>
+        <item name="android:paddingEnd">10dp</item>
+        <item name="android:paddingTop">6dp</item>
+        <item name="android:paddingBottom">6dp</item>
+        <item name="android:drawablePadding">6dp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:fontFamily">@font/inter_semibold</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:visibility">gone</item>
+    </style>
+
+    <style name="Tile">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:background">@drawable/bg_tile</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:gravity">center</item>
+        <item name="android:orientation">vertical</item>
+    </style>
+
+    <style name="TileIcon">
+        <item name="android:layout_width">22dp</item>
+        <item name="android:layout_height">22dp</item>
+        <item name="android:importantForAccessibility">no</item>
+    </style>
+
+    <style name="TileLabel">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">6dp</item>
+        <item name="android:fontFamily">@font/inter_medium</item>
+        <item name="android:textColor">#17202A</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:maxLines">1</item>
     </style>
 </resources>
