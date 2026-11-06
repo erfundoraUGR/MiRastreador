@@ -30,6 +30,23 @@ object SmsParser {
     private val timeRe = Regex("""\bT[:=]\s*(\d{1,2})/(\d{1,2})/(\d{2,4})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?""")
     private val linkRe = Regex("""[?&]q=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)""")
 
+    /**
+     * Alarmas que envían estos rastreadores por iniciativa propia.
+     * Se exige la palabra "alarm" o un "!" para no confundirlas con las
+     * respuestas de estado (p. ej. "Power: 100%" o "SOS1: ...").
+     */
+    private val alarms = listOf(
+        Regex("""help\s*me|\bsos\s*(!|alarm)""", RegexOption.IGNORE_CASE) to "SOS",
+        Regex("""(shock|vibra\w*)\s*(alarm|!)""", RegexOption.IGNORE_CASE) to "Vibración detectada",
+        Regex("""(move|moving|displacement)\s*(alarm|!)""", RegexOption.IGNORE_CASE) to "Movimiento detectado",
+        Regex("""power\s*(alarm|off|cut|down|fail)""", RegexOption.IGNORE_CASE) to "Corte de alimentación",
+        Regex("""low\s*bat|lowbat|battery\s*low""", RegexOption.IGNORE_CASE) to "Batería baja",
+        Regex("""over\s*speed|\bspeed\s*(alarm|!)""", RegexOption.IGNORE_CASE) to "Exceso de velocidad",
+        Regex("""geo-?\s*fence|out\s+of\s+(area|fence)|\bfence\s*(alarm|!)""", RegexOption.IGNORE_CASE) to "Salida de geocerca",
+        Regex("""door\s*(alarm|open|!)""", RegexOption.IGNORE_CASE) to "Puerta abierta",
+        Regex("""\balarm\w*\s*!""", RegexOption.IGNORE_CASE) to "Alarma"
+    )
+
     fun parse(body: String, receivedAt: Long): Position? {
         var lat = latRe.find(body)?.groupValues?.get(1)?.toDoubleOrNull()
         var lon = lonRe.find(body)?.groupValues?.get(1)?.toDoubleOrNull()
@@ -48,6 +65,10 @@ object SmsParser {
         val deviceTime = parseTime(body) ?: receivedAt
         return Position(lat, lon, speed, deviceTime, receivedAt)
     }
+
+    /** Devuelve el tipo de alarma en español, o null si el SMS no es una alarma. */
+    fun alarmKind(body: String): String? =
+        alarms.firstOrNull { it.first.containsMatchIn(body) }?.second
 
     private fun parseTime(body: String): Long? {
         val m = timeRe.find(body) ?: return null

@@ -1,17 +1,9 @@
 package com.ernesto.mirastreador
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.os.Build
 import android.provider.Telephony
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat
 import java.util.Locale
 
 /** Lee los SMS que llegan del número del rastreador, aunque la app esté cerrada. */
@@ -27,53 +19,55 @@ class SmsReceiver : BroadcastReceiver() {
 
         val body = parts.joinToString("") { it.messageBody ?: "" }
         val now = System.currentTimeMillis()
+        val name = TrackerStore.name(ctx)
         TrackerStore.setLastReply(ctx, body, now)
 
         val pos = SmsParser.parse(body, now)
         if (pos != null) TrackerStore.add(ctx, pos)
 
-        notify(ctx, pos, body)
+        var alarmed = false
+
+        // 1. Alarmas que envía el propio rastreador
+        SmsParser.alarmKind(body)?.let { kind ->
+            Alerts.alarm(ctx, "¡$kind! · $name", body.take(300))
+            alarmed = true
+        }
+
+        if (pos != null) {
+            // 2. Zona segura (se avisa solo al salir o al volver)
+            TrackerStore.fence(ctx)?.let { f ->
+                val d = GeoUtils.distance(pos.lat, pos.lon, f.lat, f.lon)
+                val outside = d > f.radius
+                if (outside != TrackerStore.fenceOutside(ctx)) {
+                    TrackerStore.setFenceOutside(ctx, outside)
+                    if (outside) {
+                        Alerts.alarm(ctx, "$name salió de la zona segura",
+                            "Está a ${GeoUtils.fmtDist(d)} del centro de la zona.")
+                        alarmed = true
+                    } else {
+                        Alerts.info(ctx, "$name volvió a la zona segura",
+                            "Está a ${GeoUtils.fmtDist(d)} del centro.", Alerts.ID_FENCE)
+                    }
+                }
+            }
+
+            // 3. Límite de velocidad
+            val limit = TrackerStore.speedLimit(ctx)
+            if (limit > 0 && pos.speedKmh > limit) {
+                Alerts.alarm(ctx, "Exceso de velocidad · $name",
+                    String.format(Locale.US, "%.0f km/h (límite %d km/h)", pos.speedKmh, limit))
+                alarmed = true
+            }
+
+            if (!alarmed) {
+                Alerts.info(ctx, "Nueva posición de $name",
+                    String.format(Locale.US, "%.5f, %.5f · %.1f km/h", pos.lat, pos.lon, pos.speedKmh),
+                    Alerts.ID_POSITION)
+            }
+        } else if (!alarmed) {
+            Alerts.info(ctx, "Respuesta del rastreador", body.take(300), Alerts.ID_REPLY)
+        }
+
         ctx.sendBroadcast(Intent(TrackerStore.ACTION_UPDATE).setPackage(ctx.packageName))
-    }
-
-    private fun notify(ctx: Context, pos: Position?, body: String) {
-        if (Build.VERSION.SDK_INT >= 33 &&
-            ContextCompat.checkSelfPermission(ctx, android.Manifest.permission.POST_NOTIFICATIONS)
-            != PackageManager.PERMISSION_GRANTED
-        ) return
-
-        val nm = ctx.getSystemService(NotificationManager::class.java)
-        if (Build.VERSION.SDK_INT >= 26 && nm.getNotificationChannel(CHANNEL) == null) {
-            nm.createNotificationChannel(
-                NotificationChannel(CHANNEL, "Respuestas del rastreador", NotificationManager.IMPORTANCE_DEFAULT)
-            )
-        }
-
-        val open = PendingIntent.getActivity(
-            ctx, 0,
-            Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val title = if (pos != null) "Nueva posición de ${TrackerStore.name(ctx)}" else "Respuesta del rastreador"
-        val text = if (pos != null)
-            String.format(Locale.US, "%.5f, %.5f · %.1f km/h", pos.lat, pos.lon, pos.speedKmh)
-        else body.take(120)
-
-        val n = NotificationCompat.Builder(ctx, CHANNEL)
-            .setSmallIcon(android.R.drawable.ic_menu_mylocation)
-            .setContentTitle(title)
-            .setContentText(text)
-            .setContentIntent(open)
-            .setAutoCancel(true)
-            .build()
-        try {
-            NotificationManagerCompat.from(ctx).notify(1, n)
-        } catch (_: SecurityException) {
-        }
-    }
-
-    companion object {
-        const val CHANNEL = "respuestas"
     }
 }
