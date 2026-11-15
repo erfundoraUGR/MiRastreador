@@ -28,7 +28,7 @@ object WebTrack {
     // Cookie de sesión guardada por rastreador, para no mezclar cuentas si hay varios.
     private val sessionCookie = mutableMapOf<String, String>()
 
-    private fun request(url: String, cookie: String?): Pair<String, String?> {
+    private fun request(url: String, cookie: String?, postBody: String? = null): Pair<String, String?> {
         val conn = URL(url).openConnection() as HttpURLConnection
         try {
             conn.setRequestProperty("User-Agent", UA)
@@ -36,6 +36,14 @@ object WebTrack {
             conn.connectTimeout = TIMEOUT_MS
             conn.readTimeout = TIMEOUT_MS
             conn.instanceFollowRedirects = true
+            if (postBody != null) {
+                val bytes = postBody.toByteArray(Charsets.UTF_8)
+                conn.requestMethod = "POST"
+                conn.doOutput = true
+                conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
+                conn.setFixedLengthStreamingMode(bytes.size)
+                conn.outputStream.use { it.write(bytes) }
+            }
             val stream = if (conn.responseCode in 200..299) conn.inputStream else conn.errorStream
             val body = stream?.bufferedReader()?.use { it.readText() } ?: ""
             val newCookie = conn.headerFields["Set-Cookie"]?.joinToString("; ") { it.substringBefore(";") }
@@ -45,13 +53,28 @@ object WebTrack {
         }
     }
 
+    /** Igual que hace el formulario del panel: pwd = MD5(MD5(contraseña)), nunca en texto plano. */
+    private fun md5(s: String): String {
+        val digest = java.security.MessageDigest.getInstance("MD5").digest(s.toByteArray(Charsets.UTF_8))
+        return digest.joinToString("") { "%02x".format(it) }
+    }
+
     private fun login(id: String, user: String, pass: String): Boolean {
-        val url = "$BASE/LoginByUser.aspx?method=loginSystem" +
-            "&userName=${URLEncoder.encode(user, "UTF-8")}" +
-            "&pwd=${URLEncoder.encode(pass, "UTF-8")}" +
-            "&monitor=0&loginType=ENTERPRISE&url=&rand=${Math.random()}&language=en"
-        val (body, cookie) = request(url, null)
-        if (body.contains("loginError.aspx") || cookie == null) {
+        val body = listOf(
+            "userName" to user,
+            "pwd_" to "",
+            "pwd" to md5(md5(pass)),
+            "loginType" to "ENTERPRISE",
+            "loginUrl" to "",
+            "timeZone" to "",
+            "language" to "en",
+            "monitor" to "0",
+            "url" to "",
+            "rand" to Math.random().toString()
+        ).joinToString("&") { (k, v) -> "$k=${URLEncoder.encode(v, "UTF-8")}" }
+
+        val (respBody, cookie) = request("$BASE/LoginByUser.aspx?method=loginSystem", null, body)
+        if (respBody.contains("loginError.aspx") || cookie == null) {
             sessionCookie.remove(id)
             return false
         }
