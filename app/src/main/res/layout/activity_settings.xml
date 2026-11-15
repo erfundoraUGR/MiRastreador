@@ -115,6 +115,83 @@
                 android:text="Si el rastreador no responde 3 veces seguidas, el seguimiento se pausa solo para no gastar saldo, y se reanuda cuando vuelve a responder." />
         </LinearLayout>
 
+        <!-- Seguimiento web -->
+        <LinearLayout style="@style/Card">
+            <TextView style="@style/CardTitle" android:text="Seguimiento web (sin SMS)" />
+            <TextView
+                style="@style/CardHint"
+                android:text="Si tu rastreador ya reporta su posición por datos móviles a un panel web, la app puede consultarla ahí cada pocos segundos mientras tienes la pantalla abierta, mucho más rápido que por SMS." />
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/swWeb"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:minHeight="48dp"
+                android:text="Usar seguimiento web"
+                android:textSize="15sp" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="Usuario del panel web">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etWebUser"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="Contraseña del panel web">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etWebPass"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPassword" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="user_id">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etWebUserId"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="mds">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etWebMds"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                style="@style/CardHint"
+                android:text="El user_id y el mds se obtienen una vez: entra al panel web con tu cuenta desde un navegador de PC, abre Herramientas de desarrollador → Network, y copia esos dos valores de cualquier petición a TrackService.aspx." />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnWebTest"
+                style="@style/OutlineBtn"
+                android:text="Probar conexión" />
+
+            <TextView android:id="@+id/tvWebResult" style="@style/CardHint" />
+        </LinearLayout>
+
         <!-- Modo vigilancia -->
         <LinearLayout style="@style/Card">
             <TextView style="@style/CardTitle" android:text="Modo vigilancia" />

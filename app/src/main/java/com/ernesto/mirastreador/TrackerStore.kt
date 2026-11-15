@@ -181,6 +181,27 @@ object TrackerStore {
     fun setBalanceMin(ctx: Context, v: Double, id: String = currentId(ctx)) =
         p(ctx, id).edit().putString("balanceMin", v.toString()).apply()
 
+    // ---------- Seguimiento web (sin SMS, vía la cuenta del panel del rastreador) ----------
+
+    fun webOn(ctx: Context, id: String = currentId(ctx)): Boolean = p(ctx, id).getBoolean("webOn", false)
+    fun webUser(ctx: Context, id: String = currentId(ctx)): String = p(ctx, id).getString("webUser", "") ?: ""
+    fun webPass(ctx: Context, id: String = currentId(ctx)): String = p(ctx, id).getString("webPass", "") ?: ""
+    fun webUserId(ctx: Context, id: String = currentId(ctx)): String = p(ctx, id).getString("webUserId", "") ?: ""
+    fun webMds(ctx: Context, id: String = currentId(ctx)): String = p(ctx, id).getString("webMds", "") ?: ""
+
+    fun setWebConfig(
+        ctx: Context, on: Boolean, user: String, pass: String, userId: String, mds: String,
+        id: String = currentId(ctx)
+    ) {
+        p(ctx, id).edit()
+            .putBoolean("webOn", on)
+            .putString("webUser", user.trim())
+            .putString("webPass", pass.trim())
+            .putString("webUserId", userId.trim())
+            .putString("webMds", mds.trim())
+            .apply()
+    }
+
     // ---------- Solicitudes y respuestas ----------
 
     fun lastRequestAt(ctx: Context, id: String = currentId(ctx)): Long = p(ctx, id).getLong("lastRequestAt", 0L)

@@ -75,6 +75,15 @@ class MainActivity : SecureActivity(), MapEventsReceiver {
         }
     }
 
+    // Seguimiento web: solo mientras la pantalla está visible y está activado en Ajustes
+    private val webFetching = java.util.concurrent.atomic.AtomicBoolean(false)
+    private val webTicker = object : Runnable {
+        override fun run() {
+            pollWeb()
+            handler.postDelayed(this, WEB_POLL_MS)
+        }
+    }
+
     private val updateReceiver = object : BroadcastReceiver() {
         override fun onReceive(c: Context, i: Intent) {
             refreshMap(center = true)
@@ -167,6 +176,7 @@ class MainActivity : SecureActivity(), MapEventsReceiver {
         )
         refreshMap(center = false)
         handler.post(ticker)
+        handler.post(webTicker)
     }
 
     override fun onPause() {
@@ -174,7 +184,29 @@ class MainActivity : SecureActivity(), MapEventsReceiver {
         map.onPause()
         meOverlay?.disableMyLocation()
         handler.removeCallbacks(ticker)
+        handler.removeCallbacks(webTicker)
         try { unregisterReceiver(updateReceiver) } catch (_: Exception) {}
+    }
+
+    /** Consulta el panel web del rastreador en un hilo aparte (si está activado) y actualiza el mapa. */
+    private fun pollWeb() {
+        val id = TrackerStore.currentId(this)
+        if (!TrackerStore.webOn(this, id)) return
+        if (!webFetching.compareAndSet(false, true)) return // ya hay una consulta en curso
+        Thread {
+            try {
+                val pos = WebTrack.fetch(this, id)
+                if (pos != null) {
+                    TrackerStore.add(this, pos, id)
+                    runOnUiThread {
+                        refreshMap(center = false)
+                        refreshText()
+                    }
+                }
+            } finally {
+                webFetching.set(false)
+            }
+        }.start()
     }
 
     // ---------- Menú ----------
@@ -526,6 +558,7 @@ class MainActivity : SecureActivity(), MapEventsReceiver {
 
     companion object {
         private const val DAY_MS = 24L * 60 * 60 * 1000
+        private const val WEB_POLL_MS = 7_000L
         private val ACCENT = Color.parseColor("#2E6BE6")
     }
 }

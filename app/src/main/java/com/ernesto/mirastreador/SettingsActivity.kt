@@ -34,6 +34,12 @@ class SettingsActivity : SecureActivity() {
     private lateinit var etPass: EditText
     private lateinit var etSpeed: EditText
     private lateinit var etBalanceMin: EditText
+    private lateinit var swWeb: SwitchMaterial
+    private lateinit var etWebUser: EditText
+    private lateinit var etWebPass: EditText
+    private lateinit var etWebUserId: EditText
+    private lateinit var etWebMds: EditText
+    private lateinit var tvWebResult: TextView
     private lateinit var spAuto: Spinner
     private lateinit var spFrom: Spinner
     private lateinit var spTo: Spinner
@@ -73,6 +79,12 @@ class SettingsActivity : SecureActivity() {
         etPass = findViewById(R.id.etPass)
         etSpeed = findViewById(R.id.etSpeed)
         etBalanceMin = findViewById(R.id.etBalanceMin)
+        swWeb = findViewById(R.id.swWeb)
+        etWebUser = findViewById(R.id.etWebUser)
+        etWebPass = findViewById(R.id.etWebPass)
+        etWebUserId = findViewById(R.id.etWebUserId)
+        etWebMds = findViewById(R.id.etWebMds)
+        tvWebResult = findViewById(R.id.tvWebResult)
         spAuto = findViewById(R.id.spAuto)
         spFrom = findViewById(R.id.spFrom)
         spTo = findViewById(R.id.spTo)
@@ -124,6 +136,14 @@ class SettingsActivity : SecureActivity() {
         etBalanceMin.setText(if (bmin > 0) String.format(Locale.US, "%.2f", bmin) else "")
         updateBalance()
         updateFence()
+
+        // Seguimiento web
+        swWeb.isChecked = TrackerStore.webOn(this, trackerId)
+        etWebUser.setText(TrackerStore.webUser(this, trackerId))
+        etWebPass.setText(TrackerStore.webPass(this, trackerId))
+        etWebUserId.setText(TrackerStore.webUserId(this, trackerId))
+        etWebMds.setText(TrackerStore.webMds(this, trackerId))
+        findViewById<MaterialButton>(R.id.btnWebTest).setOnClickListener { testWeb() }
         btnFenceOff.setOnClickListener {
             TrackerStore.setFence(this, null, trackerId)
             updateFence()
@@ -209,6 +229,22 @@ class SettingsActivity : SecureActivity() {
         val f = MapSetup.offlineFile(this)
         tvMapFile.text = if (f == null) "Ningún mapa cargado."
         else String.format(Locale.US, "Mapa cargado: %s (%.1f MB)", f.name, f.length() / 1_048_576.0)
+    }
+
+    // ---------- Seguimiento web ----------
+
+    private fun testWeb() {
+        // Guarda primero lo que haya escrito, para probar exactamente esos valores.
+        TrackerStore.setWebConfig(
+            this, swWeb.isChecked,
+            etWebUser.text.toString(), etWebPass.text.toString(),
+            etWebUserId.text.toString(), etWebMds.text.toString(), trackerId
+        )
+        tvWebResult.text = "Probando…"
+        Thread {
+            val result = WebTrack.test(this, trackerId)
+            runOnUiThread { tvWebResult.text = result }
+        }.start()
     }
 
     // ---------- Mapa sin conexión ----------
@@ -319,6 +355,12 @@ class SettingsActivity : SecureActivity() {
         TrackerStore.setSpeedLimit(this, etSpeed.text.toString().trim().toIntOrNull() ?: 0, trackerId)
         TrackerStore.setBalanceMin(this,
             etBalanceMin.text.toString().trim().replace(',', '.').toDoubleOrNull() ?: 0.0, trackerId)
+
+        TrackerStore.setWebConfig(
+            this, swWeb.isChecked,
+            etWebUser.text.toString(), etWebPass.text.toString(),
+            etWebUserId.text.toString(), etWebMds.text.toString(), trackerId
+        )
 
         AutoTrackWorker.schedule(this, trackerId)
         TrackerWidget.updateAll(this)
