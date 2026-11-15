@@ -136,7 +136,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:hint="Usuario del panel web">
+                android:hint="Usuario o IMEI del panel web (según cómo inicies sesión en dagps.net)">
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etWebUser"
                     android:layout_width="match_parent"

@@ -64,7 +64,7 @@ object WebTrack {
             "userName" to user,
             "pwd_" to "",
             "pwd" to md5(md5(pass)),
-            "loginType" to "ENTERPRISE",
+            "loginType" to "USER", // "USER" = se entra por IMEI/matrícula; "ENTERPRISE" sería por cuenta
             "loginUrl" to "",
             "timeZone" to "",
             "language" to "en",
