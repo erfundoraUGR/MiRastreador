@@ -168,21 +168,9 @@
                     android:layout_height="wrap_content" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:hint="mds">
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etWebMds"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
-            </com.google.android.material.textfield.TextInputLayout>
-
             <TextView
                 style="@style/CardHint"
-                android:text="El user_id y el mds se obtienen una vez: entra al panel web con tu cuenta desde un navegador de PC, abre Herramientas de desarrollador → Network, y copia esos dos valores de cualquier petición a TrackService.aspx." />
+                android:text="El user_id se obtiene una vez: entra al panel web con tu cuenta desde un navegador de PC, abre Herramientas de desarrollador → Network, y busca ese valor en cualquier petición a TrackService.aspx." />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnWebTest"

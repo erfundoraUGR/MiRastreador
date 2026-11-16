@@ -14,10 +14,10 @@ import java.util.Locale
  * reporta su posición por GPRS en tiempo real a ese servidor.
  *
  * Requiere, por cada rastreador, el usuario y contraseña de la cuenta del panel web,
- * y el "user_id" y "mds" que se obtienen una sola vez inspeccionando ese panel (ver
+ * y el "user_id" que se obtiene una sola vez inspeccionando ese panel (ver
  * Ajustes → Seguimiento web). El panel exige una sesión iniciada además de esos dos
  * valores, así que primero se hace un login (igual que haría el navegador) y se
- * repite solo si el servidor la da por caducada.
+ * obtiene el "mds" dinámicamente en cada inicio de sesión.
  */
 object WebTrack {
     private const val TAG = "WebTrack"
@@ -25,10 +25,13 @@ object WebTrack {
     private const val UA = "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36"
     private const val TIMEOUT_MS = 10_000
 
-    // Cookie de sesión guardada por rastreador, para no mezclar cuentas si hay varios.
+    // Cookie de sesión y mds guardados por rastreador, para no mezclar cuentas si hay varios.
     private val sessionCookie = mutableMapOf<String, String>()
+    private val sessionMds = mutableMapOf<String, String>()
 
-    private fun request(url: String, cookie: String?, postBody: String? = null): Pair<String, String?> {
+    private data class HttpResponse(val body: String, val cookie: String?, val location: String?, val finalUrl: String)
+
+    private fun request(url: String, cookie: String?, postBody: String? = null): HttpResponse {
         val conn = URL(url).openConnection() as HttpURLConnection
         try {
             conn.setRequestProperty("User-Agent", UA)
@@ -47,7 +50,9 @@ object WebTrack {
             val stream = if (conn.responseCode in 200..299) conn.inputStream else conn.errorStream
             val body = stream?.bufferedReader()?.use { it.readText() } ?: ""
             val newCookie = conn.headerFields["Set-Cookie"]?.joinToString("; ") { it.substringBefore(";") }
-            return body to newCookie
+            val location = conn.getHeaderField("Location")
+            val finalUrl = conn.url.toString()
+            return HttpResponse(body, newCookie, location, finalUrl)
         } finally {
             conn.disconnect()
         }
@@ -73,12 +78,28 @@ object WebTrack {
             "rand" to Math.random().toString()
         ).joinToString("&") { (k, v) -> "$k=${URLEncoder.encode(v, "UTF-8")}" }
 
-        val (respBody, cookie) = request("$BASE/LoginByUser.aspx?method=loginSystem", null, body)
-        if (respBody.contains("loginError.aspx") || cookie == null) {
+        val res = request("$BASE/LoginByUser.aspx?method=loginSystem", null, body)
+        if (res.body.contains("loginError.aspx") || res.cookie == null) {
+            Log.w(TAG, "Login fallido para $id. Respuesta: ${res.body}")
             sessionCookie.remove(id)
+            sessionMds.remove(id)
             return false
         }
-        sessionCookie[id] = cookie
+
+        val mdsRegex = Regex("""mds=([a-zA-Z0-9_-]+)""")
+        val mds = (res.location?.let { mdsRegex.find(it)?.groupValues?.get(1) })
+            ?: (mdsRegex.find(res.finalUrl)?.groupValues?.get(1))
+            ?: (mdsRegex.find(res.body)?.groupValues?.get(1))
+
+        if (mds == null) {
+            Log.w(TAG, "No se encontró mds en la respuesta de login para $id")
+            sessionCookie.remove(id)
+            sessionMds.remove(id)
+            return false
+        }
+
+        sessionCookie[id] = res.cookie
+        sessionMds[id] = mds
         return true
     }
 
@@ -94,9 +115,9 @@ object WebTrack {
         val user = TrackerStore.webUser(ctx, id)
         val pass = TrackerStore.webPass(ctx, id)
         val userId = TrackerStore.webUserId(ctx, id)
-        val mds = TrackerStore.webMds(ctx, id)
-        if (user.isBlank() || pass.isBlank() || userId.isBlank() || mds.isBlank()) return null
+        if (user.isBlank() || pass.isBlank() || userId.isBlank()) return null
         if (sessionCookie[id] == null && !login(id, user, pass)) return null
+        val mds = sessionMds[id] ?: return null
 
         repeat(2) { attempt ->
             val url = "$BASE/TrackService.aspx?method=getUserAndGpsInfoByIDsUtc" +
@@ -107,6 +128,7 @@ object WebTrack {
             // El panel contesta con esto cuando la sesión ya no es válida
             if (body.contains("loginouts") || body.contains("logout.aspx")) {
                 sessionCookie.remove(id)
+                sessionMds.remove(id)
                 if (attempt == 0 && login(id, user, pass)) return@repeat
                 return null
             }
@@ -150,14 +172,14 @@ object WebTrack {
         val user = TrackerStore.webUser(ctx, id)
         val pass = TrackerStore.webPass(ctx, id)
         val userId = TrackerStore.webUserId(ctx, id)
-        val mds = TrackerStore.webMds(ctx, id)
-        if (user.isBlank() || pass.isBlank() || userId.isBlank() || mds.isBlank())
-            return "Faltan datos: completa usuario, contraseña, user_id y mds."
+        if (user.isBlank() || pass.isBlank() || userId.isBlank())
+            return "Faltan datos: completa usuario, contraseña y user_id."
         return try {
             sessionCookie.remove(id) // fuerza un login nuevo para la prueba
+            sessionMds.remove(id)
             if (!login(id, user, pass)) return "No se pudo iniciar sesión: revisa el usuario y la contraseña."
             val pos = fetchInternal(ctx, id)
-                ?: return "Sesión iniciada, pero no llegó una posición válida: revisa el user_id y el mds."
+                ?: return "Sesión iniciada, pero no llegó una posición válida: revisa el user_id."
             String.format(Locale.US, "Conexión correcta. Posición: %.5f, %.5f", pos.lat, pos.lon)
         } catch (e: Exception) {
             "Error de red: ${e.message}"

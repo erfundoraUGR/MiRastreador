@@ -38,7 +38,6 @@ class SettingsActivity : SecureActivity() {
     private lateinit var etWebUser: EditText
     private lateinit var etWebPass: EditText
     private lateinit var etWebUserId: EditText
-    private lateinit var etWebMds: EditText
     private lateinit var tvWebResult: TextView
     private lateinit var spAuto: Spinner
     private lateinit var spFrom: Spinner
@@ -83,7 +82,6 @@ class SettingsActivity : SecureActivity() {
         etWebUser = findViewById(R.id.etWebUser)
         etWebPass = findViewById(R.id.etWebPass)
         etWebUserId = findViewById(R.id.etWebUserId)
-        etWebMds = findViewById(R.id.etWebMds)
         tvWebResult = findViewById(R.id.tvWebResult)
         spAuto = findViewById(R.id.spAuto)
         spFrom = findViewById(R.id.spFrom)
@@ -142,7 +140,6 @@ class SettingsActivity : SecureActivity() {
         etWebUser.setText(TrackerStore.webUser(this, trackerId))
         etWebPass.setText(TrackerStore.webPass(this, trackerId))
         etWebUserId.setText(TrackerStore.webUserId(this, trackerId))
-        etWebMds.setText(TrackerStore.webMds(this, trackerId))
         findViewById<MaterialButton>(R.id.btnWebTest).setOnClickListener { testWeb() }
         btnFenceOff.setOnClickListener {
             TrackerStore.setFence(this, null, trackerId)
@@ -238,7 +235,7 @@ class SettingsActivity : SecureActivity() {
         TrackerStore.setWebConfig(
             this, swWeb.isChecked,
             etWebUser.text.toString(), etWebPass.text.toString(),
-            etWebUserId.text.toString(), etWebMds.text.toString(), trackerId
+            etWebUserId.text.toString(), trackerId
         )
         tvWebResult.text = "Probando…"
         Thread {
@@ -359,7 +356,7 @@ class SettingsActivity : SecureActivity() {
         TrackerStore.setWebConfig(
             this, swWeb.isChecked,
             etWebUser.text.toString(), etWebPass.text.toString(),
-            etWebUserId.text.toString(), etWebMds.text.toString(), trackerId
+            etWebUserId.text.toString(), trackerId
         )
 
         AutoTrackWorker.schedule(this, trackerId)

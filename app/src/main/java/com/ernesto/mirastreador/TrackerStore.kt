@@ -187,10 +187,9 @@ object TrackerStore {
     fun webUser(ctx: Context, id: String = currentId(ctx)): String = p(ctx, id).getString("webUser", "") ?: ""
     fun webPass(ctx: Context, id: String = currentId(ctx)): String = p(ctx, id).getString("webPass", "") ?: ""
     fun webUserId(ctx: Context, id: String = currentId(ctx)): String = p(ctx, id).getString("webUserId", "") ?: ""
-    fun webMds(ctx: Context, id: String = currentId(ctx)): String = p(ctx, id).getString("webMds", "") ?: ""
 
     fun setWebConfig(
-        ctx: Context, on: Boolean, user: String, pass: String, userId: String, mds: String,
+        ctx: Context, on: Boolean, user: String, pass: String, userId: String,
         id: String = currentId(ctx)
     ) {
         p(ctx, id).edit()
@@ -198,7 +197,7 @@ object TrackerStore {
             .putString("webUser", user.trim())
             .putString("webPass", pass.trim())
             .putString("webUserId", userId.trim())
-            .putString("webMds", mds.trim())
+            .remove("webMds")
             .apply()
     }
 
