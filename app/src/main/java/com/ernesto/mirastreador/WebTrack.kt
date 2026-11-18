@@ -127,9 +127,11 @@ object WebTrack {
         val mds = sessionMds[id] ?: return null
 
         repeat(2) { attempt ->
-            val url = "$BASE/TrackService.aspx?method=getUserAndGpsInfoByIDsUtc" +
-                "&school_id=$userId&custid=$userId&mapType=GOOGLE&option=en" +
-                "&user_id=$userId&callback=startTrack&mds=$mds&t=${System.currentTimeMillis()}"
+            val timestamp = System.currentTimeMillis().toString()
+            val url = "$BASE/TrackService.aspx?method=getOnlineGpsInfoByIDUtc" +
+                "&callback=TrackOBJ.updateDataCallBack" +
+                "&school_id=$userId&custid=$userId&userIDs=$userId" +
+                "&mapType=GOOGLE&option=en&t=$timestamp&mds=$mds&timestamp=$timestamp"
             val (body, _) = request(url, sessionCookie[id])
 
             // El panel contesta con esto cuando la sesión ya no es válida
