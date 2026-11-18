@@ -69,16 +69,18 @@ object WebTrack {
             "userName" to user,
             "pwd_" to "",
             "pwd" to md5(md5(pass)),
-            "loginType" to "IMEI", // Cambiado a IMEI para usar la ventana de Plate No./IMEI
-            "loginUrl" to "",
-            "timeZone" to "",
+            "loginType" to "USER", // Revertimos a USER, es lo que espera el servidor
+            "loginUrl" to "https://www.dagps.net/Skins/DefaultIndex/",
+            "timeZone" to "-4",
             "language" to "en",
+            "checkPwd" to "1",
             "monitor" to "0",
-            "url" to "",
             "rand" to Math.random().toString()
         ).joinToString("&") { (k, v) -> "$k=${URLEncoder.encode(v, "UTF-8")}" }
+        // Añadimos campos dummy para igualar la petición real
+        val finalBody = body + "&x=63&y=10"
 
-        val res = request("$BASE/LoginByUser.aspx?method=loginSystem", null, body)
+        val res = request("$BASE/LoginByUser.aspx?method=loginSystem", null, finalBody)
         if (res.body.contains("loginError.aspx") || res.cookie == null) {
             Log.w(TAG, "Login fallido para $id. Respuesta: ${res.body}")
             sessionCookie.remove(id)
